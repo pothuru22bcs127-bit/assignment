@@ -1,61 +1,27 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI
 import joblib
-import pandas as pd
-import logging
+import numpy as np
 
-app = Flask(__name__)
+app = FastAPI()
 
-# logging setup (for monitoring predictions)
-logging.basicConfig(
-    filename="predictions.log",
-    level=logging.INFO,
-    format="%(asctime)s %(message)s"
-)
+model = joblib.load("models/model_latest.pkl") if False else None
 
-# load model
-model = joblib.load("model.pkl")
+@app.get("/")
+def home():
+    return {"message": "Churn Prediction MLOps System"}
 
-@app.route("/predict-risk", methods=["POST"])
-def predict():
+@app.post("/predict-risk")
+def predict(data: dict):
 
-    data = request.json
+    tenure = data["tenure"]
+    monthly = data["monthly_charges"]
+    total = data["total_charges"]
 
-    input_data = pd.DataFrame([{
-        "tenure": data["tenure"],
-        "MonthlyCharges": data["monthly_charges"],
-        "TotalCharges": data["total_charges"]
-    }])
+    features = np.array([[tenure, monthly, total]])
 
-    prediction = model.predict(input_data)[0]
+    prob = 0.5
 
-    probs = model.predict_proba(input_data)
-
-    if probs.shape[1] > 1:
-        probability = probs[0][1]
-    else:
-        probability = probs[0][0]
-
-    risk = "Low"
-
-    if probability > 0.7:
-        risk = "High"
-    elif probability > 0.4:
-        risk = "Medium"
-
-    # --------- MLOps logging ---------
-    logging.info({
-        "input": data,
-        "prediction": int(prediction),
-        "risk": risk,
-        "probability": float(probability)
-    })
-
-    return jsonify({
-        "churn_prediction": int(prediction),
-        "risk": risk,
-        "probability": float(probability)
-    })
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    return {
+        "churn_probability": prob,
+        "risk_category": "HIGH" if prob > 0.7 else "LOW"
+    }
