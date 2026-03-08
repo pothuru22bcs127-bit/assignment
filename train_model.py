@@ -8,13 +8,19 @@ import joblib
 
 from preprocess import preprocess_data
 
-# load dataset
+print("========== MLOps Training Pipeline Started ==========")
+
+# Load dataset
+print("Loading dataset...")
 df = pd.read_csv("Telco_customer_churn.csv")
 
-# preprocess
+print("Dataset Shape:", df.shape)
+
+# Preprocess data
+print("Preprocessing data...")
 X, y = preprocess_data(df)
 
-# split dataset
+# Train-test split
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
     test_size=0.2,
@@ -22,12 +28,18 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-# train model
-model = RandomForestClassifier()
+print("Training Random Forest Model...")
+
+# Train model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# predictions
+print("Model Training Completed!")
+
+# Predictions
 preds = model.predict(X_test)
+
+# Probability handling
 probs = model.predict_proba(X_test)
 
 if probs.shape[1] > 1:
@@ -35,22 +47,29 @@ if probs.shape[1] > 1:
 else:
     probs = probs[:, 0]
 
-# evaluation
-print("F1:", f1_score(y_test, preds))
-print("ROC-AUC:", roc_auc_score(y_test, probs))
-print("Precision:", precision_score(y_test, preds))
+# Evaluation Metrics
+print("========== Model Metrics ==========")
 
-# ---------- MLOps Addition (Model Versioning) ----------
+f1 = f1_score(y_test, preds)
+roc_auc = roc_auc_score(y_test, probs)
+precision = precision_score(y_test, preds)
 
-# create models folder if not exists
+print(f"F1 Score: {f1:.4f}")
+print(f"ROC-AUC Score: {roc_auc:.4f}")
+print(f"Precision Score: {precision:.4f}")
+
+print("====================================")
+
+# ---------- Model Versioning ----------
+
 os.makedirs("models", exist_ok=True)
 
-# create version name
 version = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 model_path = f"models/model_{version}.pkl"
 
-# save model
 joblib.dump(model, model_path)
 
-print(f"Model saved at {model_path}")
+print("Model saved at:", model_path)
+
+print("========== Training Pipeline Finished ==========")
