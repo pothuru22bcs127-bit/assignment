@@ -1,12 +1,22 @@
-def predict_risk(tickets_last_30_days, monthly_charge_increase, contract_type, complaint_ticket):
+pip install flask
+from flask import Flask, request, jsonify
+from rules import predict_risk
 
-    if tickets_last_30_days > 5:
-        return "HIGH"
+app = Flask(__name__)
 
-    if monthly_charge_increase and tickets_last_30_days >= 3:
-        return "MEDIUM"
+@app.route("/predict-risk", methods=["POST"])
+def risk():
 
-    if contract_type == "Month-to-Month" and complaint_ticket:
-        return "HIGH"
+    data = request.json
 
-    return "LOW"
+    result = predict_risk(
+        data["tickets_last_30_days"],
+        data["monthly_charge_increase"],
+        data["contract_type"],
+        data["complaint_ticket"]
+    )
+
+    return jsonify({"risk": result})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
