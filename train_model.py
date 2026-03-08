@@ -24,7 +24,12 @@ model.fit(X_train, y_train)
 
 # predictions
 preds = model.predict(X_test)
-probs = model.predict_proba(X_test)[:,1]
+probs = model.predict_proba(X_test)
+
+if probs.shape[1] > 1:
+    probs = probs[:,1]
+else:
+    probs = probs[:,0]
 
 # evaluation
 print("F1:", f1_score(y_test, preds))
