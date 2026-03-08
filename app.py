@@ -18,12 +18,13 @@ def predict():
     }])
 
     prediction = model.predict(input_data)[0]
+
     probs = model.predict_proba(input_data)
 
-if probs.shape[1] > 1:
-    probability = probs[0][1]
-else:
-    probability = probs[0][0]
+    if probs.shape[1] > 1:
+        probability = probs[0][1]
+    else:
+        probability = probs[0][0]
 
     risk = "Low"
 
