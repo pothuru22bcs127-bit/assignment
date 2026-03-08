@@ -1,6 +1,9 @@
 name: Docker Build
 
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -12,5 +15,7 @@ jobs:
       - name: Build Docker image
         run: docker build -t churn-api .
 
-      - name: Run tests
-        run: pytest
+      - name: Run tests inside container
+        run: |
+          pip install pytest
+          pytest
