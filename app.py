@@ -1,22 +1,38 @@
-
 from flask import Flask, request, jsonify
-from rules import predict_risk
+import joblib
+import pandas as pd
 
 app = Flask(__name__)
 
+model = joblib.load("model.pkl")
+
 @app.route("/predict-risk", methods=["POST"])
-def risk():
+def predict():
 
     data = request.json
 
-    result = predict_risk(
-        data["tickets_last_30_days"],
-        data["monthly_charge_increase"],
-        data["contract_type"],
-        data["complaint_ticket"]
-    )
+    input_data = pd.DataFrame([{
+        "tenure": data["tenure"],
+        "MonthlyCharges": data["monthly_charges"],
+        "TotalCharges": data["total_charges"]
+    }])
 
-    return jsonify({"risk": result})
+    prediction = model.predict(input_data)[0]
+    probability = model.predict_proba(input_data)[0][1]
+
+    risk = "Low"
+
+    if probability > 0.7:
+        risk = "High"
+    elif probability > 0.4:
+        risk = "Medium"
+
+    return jsonify({
+        "churn_prediction": int(prediction),
+        "risk": risk,
+        "probability": float(probability)
+    })
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
