@@ -1,9 +1,18 @@
 from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
+import logging
 
 app = Flask(__name__)
 
+# logging setup (for monitoring predictions)
+logging.basicConfig(
+    filename="predictions.log",
+    level=logging.INFO,
+    format="%(asctime)s %(message)s"
+)
+
+# load model
 model = joblib.load("model.pkl")
 
 @app.route("/predict-risk", methods=["POST"])
@@ -32,6 +41,14 @@ def predict():
         risk = "High"
     elif probability > 0.4:
         risk = "Medium"
+
+    # --------- MLOps logging ---------
+    logging.info({
+        "input": data,
+        "prediction": int(prediction),
+        "risk": risk,
+        "probability": float(probability)
+    })
 
     return jsonify({
         "churn_prediction": int(prediction),
